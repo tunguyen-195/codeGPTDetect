@@ -59,7 +59,7 @@ uploads/*
 !uploads/.gitkeep
 
 # ===== Models (large files - not tracked in git) =====
-models/
+/models/
 *.safetensors
 *.bin
 *.pt
