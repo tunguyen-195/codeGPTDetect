@@ -65,6 +65,13 @@ function adminApp() {
                 await this.checkAdminAccess();
 
                 if (!this.accessDenied) {
+                    // Watch tab changes to lazy-load data
+                    this.$watch('currentTab', (newTab) => {
+                        if (newTab === 'users') this.loadUsers();
+                        if (newTab === 'history') this.loadAllAnalyses();
+                        if (newTab === 'system') this.checkHealth();
+                    });
+
                     // Load dashboard data
                     await this.loadDashboardData();
 
@@ -344,28 +351,7 @@ function adminApp() {
             }
         },
 
-        // Watch for tab changes to load data
-        $watch: {
-            currentTab(newTab) {
-                if (newTab === 'users' && this.users.length === 0) {
-                    this.loadUsers();
-                }
-                if (newTab === 'history' && this.allAnalyses.length === 0) {
-                    this.loadAllAnalyses();
-                }
-            }
-        }
     }
 }
-
-// Tab watcher workaround for Alpine.js
-document.addEventListener('alpine:init', () => {
-    Alpine.effect(() => {
-        const app = Alpine.store('adminApp');
-        if (app) {
-            // This will be called when currentTab changes
-        }
-    });
-});
 
 console.log('📦 Admin Panel script loaded');
