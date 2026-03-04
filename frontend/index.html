@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T07GPTcodeDetect - Hệ thống phát hiện code được sinh bởi các mô hình ngôn ngữ lớn</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CodeMirror for code editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .CodeMirror {
+            height: 400px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 14px;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen" x-data="app()" x-init="init()">
+
+    <!-- Loading Screen -->
+    <div x-show="loading" x-cloak class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto"></div>
+            <p class="mt-4 text-gray-700 text-center">Đang tải...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg" x-show="!loading">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="/static/logo.png" alt="Logo" class="h-12 w-12 mr-3 rounded-full shadow-md">
+                    <div>
+                        <span class="text-2xl font-bold gradient-bg bg-clip-text text-transparent">
+                            T07GPTcodeDetect
+                        </span>
+                        <span
+                            class="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">v3.0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4" x-show="!isLoggedIn">
+                    <button @click="showLogin = true" class="text-gray-700 hover:text-purple-600 font-medium">
+                        Đăng nhập
+                    </button>
+                    <button @click="showRegister = true"
+                        class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                        Đăng ký
+                    </button>
+                </div>
+
+                <div class="flex items-center space-x-4" x-show="isLoggedIn" x-cloak>
+                    <span class="text-gray-700">Xin chào, <strong x-text="user.username"></strong></span>
+                    <span x-show="user.role === 'admin'"
+                        class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">Admin</span>
+                    <a x-show="user.role === 'admin'" href="/admin"
+                        class="bg-purple-600 text-white px-3 py-1.5 rounded-lg hover:bg-purple-700 transition text-sm font-medium">
+                        ⚙️ Admin Panel
+                    </a>
+                    <button @click="logout()" class="text-red-600 hover:text-red-700 font-medium">
+                        Đăng xuất
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full" x-show="!loading">
+
+        <!-- Dashboard (if logged in) -->
+        <div x-show="isLoggedIn && currentPage === 'dashboard'" x-cloak>
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow card-hover transition">
+                    <div class="text-gray-500 text-sm font-medium mb-2">Tổng Phân Tích</div>
+                    <div class="text-3xl font-bold text-gray-900" x-text="stats.total_analyses || 0"></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow card-hover transition">
+                    <div class="text-gray-500 text-sm font-medium mb-2">AI Code</div>
+                    <div class="text-3xl font-bold text-purple-600" x-text="stats.ai_generated || 0"></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow card-hover transition">
+                    <div class="text-gray-500 text-sm font-medium mb-2">Human Code</div>
+                    <div class="text-3xl font-bold text-green-600" x-text="stats.human_written || 0"></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow card-hover transition">
+                    <div class="text-gray-500 text-sm font-medium mb-2">Độ Chính Xác TB</div>
+                    <div class="text-3xl font-bold text-blue-600" x-text="(stats.avg_confidence || 0).toFixed(1) + '%'">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Tool -->
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Phân Tích Code</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ngôn ngữ</label>
+                        <select x-model="analysisForm.language"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            <option value="auto">Tự động</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                        <select x-model="analysisForm.model" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            <option value="auto">Tự động</option>
+                            <option value="python">Python Model</option>
+                            <option value="java">Java Model</option>
+                            <option value="base">Base Model</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lưu lịch sử</label>
+                        <input type="checkbox" x-model="analysisForm.save_to_history"
+                            class="mt-3 h-5 w-5 text-purple-600">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Code</label>
+                    <textarea id="codeEditor" x-model="analysisForm.code"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono" rows="10"
+                        placeholder="Paste your code here..."></textarea>
+                </div>
+
+                <button @click="analyzeCode()" :disabled="analyzing"
+                    class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50">
+                    <span x-show="!analyzing">🔍 Phân Tích Code</span>
+                    <span x-show="analyzing">⏳ Đang phân tích...</span>
+                </button>
+
+                <!-- Results -->
+                <div x-show="analysisResult" x-cloak class="mt-6 p-6 border-2 rounded-lg"
+                    :class="analysisResult?.prediction === 'AI-Generated' ? 'border-purple-500 bg-purple-50' : 'border-green-500 bg-green-50'">
+                    <h3 class="text-xl font-bold mb-4">Kết Quả Phân Tích</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-600 mb-1">Dự đoán</div>
+                            <div class="text-2xl font-bold"
+                                :class="analysisResult?.prediction === 'AI-Generated' ? 'text-purple-600' : 'text-green-600'"
+                                x-text="analysisResult?.prediction === 'AI-Generated' ? '🤖 AI-Generated' : '✍️ Human-Written'">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-600 mb-1">Độ tin cậy</div>
+                            <div class="text-2xl font-bold text-gray-900"
+                                x-text="(analysisResult?.confidence * 100).toFixed(2) + '%'"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-600 mb-1">Ngôn ngữ</div>
+                            <div class="text-lg font-semibold text-gray-900"
+                                x-text="analysisResult?.language?.toUpperCase()"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-600 mb-1">Model</div>
+                            <div class="text-lg font-semibold text-gray-900" x-text="analysisResult?.model_used"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-600 mb-2">Xác suất chi tiết</div>
+                        <div class="space-y-2">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>AI-Generated</span>
+                                    <span
+                                        x-text="(analysisResult?.probabilities?.['AI-Generated'] * 100).toFixed(2) + '%'"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-purple-600 h-2 rounded-full"
+                                        :style="'width: ' + (analysisResult?.probabilities?.['AI-Generated'] * 100) + '%'">
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Human-Written</span>
+                                    <span
+                                        x-text="(analysisResult?.probabilities?.['Human-Written'] * 100).toFixed(2) + '%'"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full"
+                                        :style="'width: ' + (analysisResult?.probabilities?.['Human-Written'] * 100) + '%'">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent History -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Lịch Sử Gần Đây</h2>
+
+                <div x-show="history.length === 0" class="text-center text-gray-500 py-8">
+                    Chưa có lịch sử phân tích
+                </div>
+
+                <div class="space-y-4">
+                    <template x-for="item in history" :key="item.id">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded"
+                                            :class="item.prediction === 'AI-Generated' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'"
+                                            x-text="item.prediction === 'AI-Generated' ? '🤖 AI' : '✍️ Human'"></span>
+                                        <span class="text-sm text-gray-600"
+                                            x-text="item.language?.toUpperCase()"></span>
+                                        <span class="text-sm text-gray-600"
+                                            x-text="(item.confidence * 100).toFixed(1) + '%'"></span>
+                                    </div>
+                                    <div class="text-sm text-gray-500"
+                                        x-text="new Date(item.created_at).toLocaleString('vi-VN')"></div>
+                                </div>
+                                <button @click="deleteHistory(item.id)" class="text-red-600 hover:text-red-700">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public Analysis (if not logged in) -->
+        <div x-show="!isLoggedIn" x-cloak>
+            <div class="text-center mb-12">
+                <!-- Logo và Tên trường -->
+                <div class="flex flex-col items-center mb-6">
+                    <img src="/static/logo.png" alt="Logo Đại học Kỹ thuật-Hậu cần CAND"
+                        class="h-24 w-24 mb-4 rounded-full shadow-xl border-4 border-purple-100">
+                    <p class="text-sm text-gray-500 font-medium uppercase tracking-wide">Đại học Kỹ thuật-Hậu cần CAND
+                    </p>
+                </div>
+
+                <h1 class="text-5xl font-bold gradient-bg bg-clip-text text-transparent mb-4">
+                    T07GPTcodeDetect
+                </h1>
+                <p class="text-xl text-gray-600 mb-2">
+                    Hệ thống phát hiện mã nguồn được sinh bởi AI
+                </p>
+                <p class="text-sm text-gray-500 mb-8">
+                    Ứng dụng Deep Learning trong việc phát hiện code do ChatGPT, GPT-4, Copilot sinh ra
+                </p>
+                <div class="flex justify-center space-x-4">
+                    <button @click="showRegister = true"
+                        class="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        🚀 Bắt Đầu Miễn Phí
+                    </button>
+                    <button @click="showLogin = true"
+                        class="border-2 border-purple-600 text-purple-600 px-8 py-3 rounded-lg hover:bg-purple-50 transition font-semibold text-lg">
+                        Đăng Nhập
+                    </button>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <div class="text-4xl mb-4">🎯</div>
+                    <h3 class="text-xl font-bold mb-2">Độ Chính Xác Cao</h3>
+                    <p class="text-gray-600">100% accuracy trên Python test set</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold mb-2">Phân Tích Nhanh</h3>
+                    <p class="text-gray-600">Kết quả trong vài giây</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <div class="text-4xl mb-4">🌐</div>
+                    <h3 class="text-xl font-bold mb-2">Đa Ngôn Ngữ</h3>
+                    <p class="text-gray-600">Hỗ trợ Python, Java, C++</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div x-show="showLogin" x-cloak
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+        @click.self="showLogin = false">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-6">Đăng Nhập</h2>
+
+            <form @submit.prevent="login()">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" x-model="loginForm.email" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="your@email.com">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" x-model="loginForm.password" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="••••••••">
+                </div>
+
+                <div x-show="loginError" x-cloak class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    <span x-text="loginError"></span>
+                </div>
+
+                <button type="submit" :disabled="loggingIn"
+                    class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50">
+                    <span x-show="!loggingIn">Đăng Nhập</span>
+                    <span x-show="loggingIn">Đang đăng nhập...</span>
+                </button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <button @click="showLogin = false; showRegister = true;" class="text-purple-600 hover:underline">
+                    Chưa có tài khoản? Đăng ký ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div x-show="showRegister" x-cloak
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+        @click.self="showRegister = false">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-6">Đăng Ký</h2>
+
+            <form @submit.prevent="register()">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" x-model="registerForm.email" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="your@email.com">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" x-model="registerForm.username" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="username">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Họ và Tên</label>
+                    <input type="text" x-model="registerForm.full_name"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="Nguyen Van A">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" x-model="registerForm.password" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="••••••••">
+                    <p class="text-xs text-gray-500 mt-1">Tối thiểu 8 ký tự, có chữ hoa, chữ thường và số</p>
+                </div>
+
+                <div x-show="registerError" x-cloak
+                    class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    <span x-text="registerError"></span>
+                </div>
+
+                <button type="submit" :disabled="registering"
+                    class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50">
+                    <span x-show="!registering">Đăng Ký</span>
+                    <span x-show="registering">Đang đăng ký...</span>
+                </button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <button @click="showRegister = false; showLogin = true;" class="text-purple-600 hover:underline">
+                    Đã có tài khoản? Đăng nhập
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-16 py-8" x-show="!loading">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <img src="/static/logo.png" alt="Logo" class="h-12 w-12 mr-3 rounded-full">
+                    <div>
+                        <p class="font-semibold">T07GPTcodeDetect</p>
+                        <p class="text-sm text-gray-400">Đại học Kỹ thuật-Hậu cần CAND</p>
+                    </div>
+                </div>
+                <div class="text-center md:text-right">
+                    <p class="text-sm text-gray-400">© 2025 T07GPTcodeDetect. All rights reserved.</p>
+                    <p class="text-xs text-gray-500 mt-1">Powered by CodeBERT & Deep Learning</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js?v=3"></script>
+</body>
+
+</html>

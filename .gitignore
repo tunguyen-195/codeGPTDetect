@@ -1,0 +1,122 @@
+# T07GPTcodeDetect - Git Ignore File
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ===== Virtual Environment =====
+.venv/
+venv/
+ENV/
+env/
+docs/
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ===== Database =====
+*.db
+*.sqlite
+*.sqlite3
+gptsniffer.db
+t07gptcodedetect.db
+
+# ===== Logs =====
+logs/
+*.log
+log/
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+
+# ===== Uploads =====
+uploads/*
+!uploads/.gitkeep
+
+# ===== Models (large files - not tracked in git) =====
+models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# ===== Datasets =====
+DATASETS/
+
+# ===== Generated Results =====
+results/
+reports/
+
+# ===== Windows artifacts =====
+nul
+
+# ===== Temporary Files =====
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# ===== OS Files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Jupyter Notebooks =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== Test Coverage =====
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ===== Documentation Build =====
+docs/_build/
+site/
+
+# ===== Temporary Development Docs =====
+CLEANUP_PLAN.md
+TEMP_*.md
+DRAFT_*.md
+thesis_context/
+TRAINING_START_TIME.txt
+TRAINING_PROCESS_INFO.txt
+START_HERE_WHEN_RETURN.txt
+CURRENT_STATUS.md
+QUICK_RESUME_CHECKLIST.md
+RESUME_POINT_AFTER_TRAINING.md
+test_results.txt
+
+# ===== Cache =====
+.cache/
+.pytest_cache/
+.mypy_cache/

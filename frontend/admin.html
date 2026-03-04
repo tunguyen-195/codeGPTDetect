@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - T07GPTcodeDetect</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Admin App (MUST load before Alpine.js) -->
+    <script src="/static/js/admin.js"></script>
+
+    <!-- Alpine.js (load AFTER admin.js) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid white;
+        }
+
+        .stat-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100" x-data="adminApp()" x-init="init()">
+
+    <!-- Loading Screen -->
+    <div x-show="loading" x-cloak class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto"></div>
+            <p class="mt-4 text-gray-700">Đang tải Admin Panel...</p>
+        </div>
+    </div>
+
+    <!-- Access Denied -->
+    <div x-show="accessDenied" x-cloak class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md">
+            <div class="text-6xl mb-4">🚫</div>
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Truy Cập Bị Từ Chối</h2>
+            <p class="text-gray-600 mb-4">Bạn không có quyền truy cập trang Admin Panel.</p>
+            <p x-show="deniedReason" class="text-sm text-orange-600 bg-orange-50 p-3 rounded mb-4"
+                x-text="deniedReason"></p>
+            <p x-show="user" class="text-sm text-gray-500 mb-4">
+                Đang đăng nhập: <strong x-text="user?.email"></strong> (Role: <span x-text="user?.role"></span>)
+            </p>
+            <a href="/"
+                class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition inline-block">
+                ← Quay về Trang Chủ
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div x-show="!loading && !accessDenied" x-cloak class="flex min-h-screen">
+
+        <!-- Sidebar -->
+        <aside class="w-64 gradient-bg text-white flex flex-col">
+            <!-- Logo -->
+            <div class="p-4 border-b border-white/20">
+                <div class="flex items-center">
+                    <img src="/static/logo.png" alt="Logo" class="h-10 w-10 rounded-full mr-3">
+                    <div>
+                        <h1 class="font-bold text-lg">T07GPTcodeDetect</h1>
+                        <p class="text-xs text-purple-200">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 py-4">
+                <a href="#" @click.prevent="currentTab = 'dashboard'" class="sidebar-item flex items-center px-4 py-3"
+                    :class="{ 'active': currentTab === 'dashboard' }">
+                    <span class="text-xl mr-3">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" @click.prevent="currentTab = 'users'" class="sidebar-item flex items-center px-4 py-3"
+                    :class="{ 'active': currentTab === 'users' }">
+                    <span class="text-xl mr-3">👥</span>
+                    <span>Quản Lý Users</span>
+                </a>
+                <a href="#" @click.prevent="currentTab = 'history'" class="sidebar-item flex items-center px-4 py-3"
+                    :class="{ 'active': currentTab === 'history' }">
+                    <span class="text-xl mr-3">📜</span>
+                    <span>Lịch Sử Phân Tích</span>
+                </a>
+                <a href="#" @click.prevent="currentTab = 'system'" class="sidebar-item flex items-center px-4 py-3"
+                    :class="{ 'active': currentTab === 'system' }">
+                    <span class="text-xl mr-3">⚙️</span>
+                    <span>System Health</span>
+                </a>
+            </nav>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-white/20">
+                <a href="/" class="sidebar-item flex items-center px-4 py-2 rounded">
+                    <span class="text-xl mr-3">🏠</span>
+                    <span>Về Trang Chủ</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800" x-text="getTabTitle()"></h2>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600">
+                        Xin chào, <strong x-text="user?.username || 'Admin'"></strong>
+                    </span>
+                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">Admin</span>
+                    <button @click="logout()" class="text-red-600 hover:text-red-700 font-medium">
+                        Đăng xuất
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 p-6 overflow-auto">
+
+                <!-- Dashboard Tab -->
+                <div x-show="currentTab === 'dashboard'">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="stat-card bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm font-medium">Tổng Users</p>
+                                    <p class="text-3xl font-bold text-gray-900" x-text="stats.users?.total || 0"></p>
+                                </div>
+                                <div class="text-4xl">👥</div>
+                            </div>
+                            <p class="text-sm text-green-600 mt-2">
+                                <span x-text="stats.users?.active || 0"></span> active
+                            </p>
+                        </div>
+
+                        <div class="stat-card bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm font-medium">Tổng Phân Tích</p>
+                                    <p class="text-3xl font-bold text-gray-900" x-text="stats.analyses?.total || 0"></p>
+                                </div>
+                                <div class="text-4xl">📊</div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">
+                                Avg: <span x-text="(stats.analyses?.avg_confidence || 0) + '%'"></span>
+                            </p>
+                        </div>
+
+                        <div class="stat-card bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm font-medium">AI-Generated</p>
+                                    <p class="text-3xl font-bold text-purple-600"
+                                        x-text="stats.analyses?.ai_generated || 0"></p>
+                                </div>
+                                <div class="text-4xl">🤖</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm font-medium">Human-Written</p>
+                                    <p class="text-3xl font-bold text-green-600"
+                                        x-text="stats.analyses?.human_written || 0"></p>
+                                </div>
+                                <div class="text-4xl">✍️</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Phân Tích theo Ngôn Ngữ</h3>
+                            <canvas id="languageChart" height="200"></canvas>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">AI vs Human</h3>
+                            <canvas id="predictionChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Recent Users -->
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Users Mới Đăng Ký</h3>
+                            <div class="space-y-3">
+                                <template x-for="user in recentUsers" :key="user.id">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                                        <div>
+                                            <p class="font-medium" x-text="user.username"></p>
+                                            <p class="text-sm text-gray-500" x-text="user.email"></p>
+                                        </div>
+                                        <span class="px-2 py-1 text-xs rounded"
+                                            :class="user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'"
+                                            x-text="user.role"></span>
+                                    </div>
+                                </template>
+                                <p x-show="recentUsers.length === 0" class="text-gray-500 text-center py-4">
+                                    Chưa có user nào
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Recent Analyses -->
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Phân Tích Gần Đây</h3>
+                            <div class="space-y-3">
+                                <template x-for="analysis in recentAnalyses" :key="analysis.id">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                                        <div>
+                                            <span class="px-2 py-1 text-xs rounded mr-2"
+                                                :class="analysis.prediction === 'AI-Generated' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'"
+                                                x-text="analysis.prediction === 'AI-Generated' ? '🤖 AI' : '✍️ Human'"></span>
+                                            <span class="text-sm text-gray-600"
+                                                x-text="analysis.language?.toUpperCase()"></span>
+                                        </div>
+                                        <span class="text-sm font-medium"
+                                            x-text="(analysis.confidence * 100).toFixed(1) + '%'"></span>
+                                    </div>
+                                </template>
+                                <p x-show="recentAnalyses.length === 0" class="text-gray-500 text-center py-4">
+                                    Chưa có phân tích nào
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div x-show="currentTab === 'users'">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800">Danh Sách Users</h3>
+                            <button @click="loadUsers()" class="text-purple-600 hover:text-purple-700">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Username</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <template x-for="u in users" :key="u.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 text-sm text-gray-900" x-text="u.id"></td>
+                                            <td class="px-6 py-4 text-sm font-medium text-gray-900" x-text="u.username">
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500" x-text="u.email"></td>
+                                            <td class="px-6 py-4">
+                                                <select x-model="u.role" @change="updateRole(u.id, u.role)"
+                                                    class="text-sm border rounded px-2 py-1"
+                                                    :class="u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'">
+                                                    <option value="admin">Admin</option>
+                                                    <option value="user">User</option>
+                                                    <option value="viewer">Viewer</option>
+                                                </select>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <button @click="toggleStatus(u.id, u.is_active)"
+                                                    class="px-3 py-1 text-xs rounded-full"
+                                                    :class="u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                                    <span x-text="u.is_active ? '✓ Active' : '✕ Inactive'"></span>
+                                                </button>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <button @click="deleteUser(u.id, u.username)"
+                                                    class="text-red-600 hover:text-red-800 text-sm"
+                                                    :disabled="u.role === 'admin'">
+                                                    🗑️ Xóa
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p x-show="users.length === 0" class="text-gray-500 text-center py-8">
+                            Không có user nào
+                        </p>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div x-show="currentTab === 'history'">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800">Lịch Sử Phân Tích Toàn Hệ Thống</h3>
+                            <button @click="loadAllAnalyses()" class="text-purple-600 hover:text-purple-700">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User
+                                            ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Language</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Prediction</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            Confidence</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <template x-for="a in allAnalyses" :key="a.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 text-sm text-gray-900" x-text="a.id"></td>
+                                            <td class="px-6 py-4 text-sm text-gray-500" x-text="a.user_id"></td>
+                                            <td class="px-6 py-4 text-sm text-gray-900"
+                                                x-text="a.language?.toUpperCase()"></td>
+                                            <td class="px-6 py-4">
+                                                <span class="px-2 py-1 text-xs rounded"
+                                                    :class="a.prediction === 'AI-Generated' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'"
+                                                    x-text="a.prediction"></span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm font-medium"
+                                                x-text="(a.confidence * 100).toFixed(1) + '%'"></td>
+                                            <td class="px-6 py-4 text-sm text-gray-500"
+                                                x-text="formatDate(a.created_at)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p x-show="allAnalyses.length === 0" class="text-gray-500 text-center py-8">
+                            Chưa có phân tích nào
+                        </p>
+                    </div>
+                </div>
+
+                <!-- System Tab -->
+                <div x-show="currentTab === 'system'">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Health Status -->
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">System Health</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded">
+                                    <span class="font-medium">Overall Status</span>
+                                    <span class="px-3 py-1 rounded-full text-sm"
+                                        :class="health.status === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                        x-text="health.status || 'Unknown'"></span>
+                                </div>
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded">
+                                    <span class="font-medium">Database</span>
+                                    <span class="px-3 py-1 rounded-full text-sm"
+                                        :class="health.database === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                        x-text="health.database || 'Unknown'"></span>
+                                </div>
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded">
+                                    <span class="font-medium">Version</span>
+                                    <span class="text-gray-600" x-text="health.version || '3.0.0'"></span>
+                                </div>
+                            </div>
+                            <button @click="checkHealth()"
+                                class="mt-4 w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+                                🔄 Refresh Health Check
+                            </button>
+                        </div>
+
+                        <!-- System Info -->
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Thông Tin Hệ Thống</h3>
+                            <div class="space-y-3">
+                                <div class="p-4 bg-gray-50 rounded">
+                                    <p class="text-sm text-gray-500">Application</p>
+                                    <p class="font-medium">T07GPTcodeDetect v3.0</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded">
+                                    <p class="text-sm text-gray-500">Backend</p>
+                                    <p class="font-medium">FastAPI + Python 3.11</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded">
+                                    <p class="text-sm text-gray-500">ML Model</p>
+                                    <p class="font-medium">CodeBERT (Fine-tuned)</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded">
+                                    <p class="text-sm text-gray-500">Database</p>
+                                    <p class="font-medium">SQLite (Development)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

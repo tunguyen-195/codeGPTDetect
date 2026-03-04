@@ -1,0 +1,51 @@
+# T07GPTcodeDetect v3.0 - Docker Compose Configuration
+
+version: '3.8'
+
+services:
+  # Web application
+  web:
+    build: .
+    container_name: t07gptcodedetect-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./t07gptcodedetect.db:/app/t07gptcodedetect.db
+    environment:
+      - DATABASE_URL=sqlite:///./t07gptcodedetect.db
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: PostgreSQL database (uncomment for production)
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: t07gptcodedetect-db
+  #   environment:
+  #     - POSTGRES_DB=t07gptcodedetect
+  #     - POSTGRES_USER=t07gptcodedetect
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-secure-password}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+  # Optional: Redis for session storage (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: t07gptcodedetect-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:
