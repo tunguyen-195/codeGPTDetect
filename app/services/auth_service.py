@@ -53,8 +53,8 @@ class AuthService:
             Dictionary with access_token, refresh_token, and expiration info
         """
         # Generate tokens
-        access_token = create_access_token(data={"sub": user_id})
-        refresh_token = create_refresh_token(data={"sub": user_id})
+        access_token = create_access_token(data={"sub": str(user_id)})
+        refresh_token = create_refresh_token(data={"sub": str(user_id)})
         
         # Calculate expiration
         expires_at = datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
@@ -109,8 +109,8 @@ class AuthService:
             return None
         
         # Generate new access token
-        access_token = create_access_token(data={"sub": user_id})
-        
+        access_token = create_access_token(data={"sub": str(user_id)})
+
         # Update session
         session.token = access_token
         db.commit()
