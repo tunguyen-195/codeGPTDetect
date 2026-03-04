@@ -174,7 +174,7 @@ function adminApp() {
         async loadUsers() {
             try {
                 const response = await axios.get('/api/users');
-                this.users = response.data.data?.items || [];
+                this.users = response.data.users || response.data.data?.items || [];
                 console.log('👥 All users loaded:', this.users.length);
             } catch (error) {
                 console.error('Failed to load users:', error);
