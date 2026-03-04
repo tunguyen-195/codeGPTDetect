@@ -1,505 +1,210 @@
 # T07GPTcodeDetect
 
-> **Hệ thống phát hiện code được sinh bởi các mô hình ngôn ngữ lớn T07**
->
-> A deep learning system for detecting AI-generated code using CodeBERT models
+> **Hệ thống phát hiện code được sinh bởi các mô hình ngôn ngữ lớn**
+> AI-generated code detection using fine-tuned CodeBERT models (Python & Java)
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-green.svg)](https://fastapi.tiangolo.com/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Accuracy](https://img.shields.io/badge/accuracy-100%25%20(Python)-brightgreen.svg)](/)
 
 ---
 
-## 📋 Mục Lục
+## Cài Đặt Nhanh (Windows)
 
-- [Giới Thiệu](#giới-thiệu)
-- [Tính Năng](#tính-năng)
-- [Kiến Trúc Hệ Thống](#kiến-trúc-hệ-thống)
-- [Cài Đặt](#cài-đặt)
-- [Sử Dụng](#sử-dụng)
-- [API Documentation](#api-documentation)
-- [Mô Hình ML](#mô-hình-ml)
-- [Screenshots](#screenshots)
-- [Đóng Góp](#đóng-góp)
-- [License](#license)
-
----
-
-## 🎯 Giới Thiệu
-
-**T07GPTcodeDetect** là một hệ thống web application sử dụng deep learning để phát hiện mã nguồn được sinh ra bởi các mô hình AI (như ChatGPT, GPT-4, Copilot, v.v.) và phân biệt với mã nguồn do con người viết.
-
-### Mục Đích
-
-- **Giáo dục**: Giúp giáo viên phát hiện sinh viên sử dụng AI để làm bài tập
-- **Code Review**: Hỗ trợ review code để đảm bảo chất lượng
-- **Nghiên cứu**: Phân tích patterns của AI-generated code
-
-### Đặc Điểm Nổi Bật
-
-- ✅ **Độ chính xác cao**: 100% trên Python test set, 85% trên Java
-- ⚡ **Nhanh chóng**: Phân tích trong < 2 giây
-- 🌐 **Đa ngôn ngữ**: Hỗ trợ Python, Java, C++
-- 🎨 **Giao diện đẹp**: Modern, responsive UI
-- 🔐 **Bảo mật**: JWT authentication, bcrypt password hashing
-- 📊 **Thống kê**: Dashboard với charts và analytics
-
----
-
-## ✨ Tính Năng
-
-### Core Features
-
-#### 🤖 Code Analysis
-
-- Phát hiện code AI-generated vs Human-written
-- Hỗ trợ nhiều ngôn ngữ lập trình (Python, Java, C++)
-- Auto-detect ngôn ngữ
-- Multiple ML models (Python model, Java model, Base model)
-- Confidence scoring với probability distribution
-
-#### 👥 User Management
-
-- User registration và authentication
-- JWT token-based security
-- Role-based access control (Admin/User)
-- Session management
-- Password hashing với bcrypt
-
-#### 📊 Dashboard & Analytics
-
-- User statistics overview
-- Analysis history tracking
-- Charts và visualizations
-- Export functionality (API ready)
-
-#### 🎨 Modern UI/UX
-
-- Responsive design (mobile/tablet/desktop)
-- Beautiful gradient color scheme
-- Smooth animations
-- Loading states
-- Error handling
-- Modal dialogs
-
----
-
-## 🏗️ Kiến Trúc Hệ Thống
-
-### Tech Stack
-
-#### Backend
-
-```
-- Python 3.11
-- FastAPI (Web framework)
-- SQLAlchemy (ORM)
-- PyTorch (Deep learning)
-- Transformers (Hugging Face)
-- JWT (Authentication)
-- bcrypt (Password hashing)
-- SQLite (Database - dev)
-```
-
-#### Frontend
-
-```
-- HTML5/CSS3
-- Alpine.js (Reactivity)
-- Tailwind CSS (Styling)
-- Axios (HTTP client)
-- CodeMirror (Code editor)
-```
-
-#### ML Models
-
-```
-- Base: microsoft/codebert-base
-- Fine-tuned: Binary classification (AI vs Human)
-- Python Model: 100% accuracy
-- Java Model: 85% accuracy
-```
-
-### Architecture Diagram
-
-```
-┌─────────────────────────────────────┐
-│         Browser (Client)            │
-│  HTML + Alpine.js + Tailwind CSS    │
-└──────────────┬──────────────────────┘
-               │ HTTP/REST + JWT
-               ▼
-┌─────────────────────────────────────┐
-│      FastAPI Backend Server         │
-│  ┌───────────────────────────────┐  │
-│  │   Authentication Middleware   │  │
-│  │   JWT + Role-based Access     │  │
-│  └───────────────────────────────┘  │
-│  ┌───────────────────────────────┐  │
-│  │        API Endpoints          │  │
-│  │  /api/auth, /api/analysis     │  │
-│  └───────────────────────────────┘  │
-└──────────────┬──────────────────────┘
-               │
-      ┌────────┴────────┐
-      ▼                 ▼
-┌──────────┐    ┌──────────────┐
-│ Database │    │  ML Models   │
-│  SQLite  │    │  CodeBERT    │
-│          │    │  Python/Java │
-└──────────┘    └──────────────┘
-```
-
----
-
-## 🚀 Cài Đặt
-
-### Yêu Cầu Hệ Thống
-
-- Python 3.8 hoặc cao hơn
-- 10GB RAM (cho ML models)
-- 2GB disk space
-- Windows/Linux/macOS
-
-### Bước 1: Clone Repository
+### Bước 1 — Clone repo
 
 ```bash
-git clone https://github.com/yourusername/T07GPTcodeDetect.git
-cd T07GPTcodeDetect
+git clone https://github.com/tunguyen-195/codeGPTDetect.git
+cd codeGPTDetect
 ```
 
-### Bước 2: Cài Đặt Dependencies
+### Bước 2 — Copy models (thủ công)
 
-```bash
-pip install -r requirements.txt
+Models không được push lên git vì quá lớn (~1GB). Cần copy từ máy gốc:
+
+```
+Cấu trúc cần có sau khi copy:
+
+codeGPTDetect/
+└── models/
+    ├── java-detector-finetuned/
+    │   ├── config.json
+    │   ├── model.safetensors      ← ~498 MB
+    │   ├── tokenizer.json
+    │   ├── tokenizer_config.json
+    │   ├── vocab.json
+    │   └── merges.txt
+    │
+    └── python-detector-finetuned/
+        ├── config.json
+        ├── model.safetensors      ← ~498 MB
+        ├── tokenizer.json
+        ├── tokenizer_config.json
+        ├── vocab.json
+        └── merges.txt
 ```
 
-### Bước 3: Cấu Hình Environment
+> Xem mục **"Cách Copy Models"** bên dưới để biết cách lấy files từ máy gốc.
 
-```bash
-# Copy template
-cp .env.example .env
+### Bước 3 — Chạy SETUP.bat
 
-# Edit .env file và thay đổi:
-# - SECRET_KEY
-# - JWT_SECRET_KEY  
-# - ADMIN_PASSWORD
+Double-click hoặc chạy trong terminal:
+
+```
+SETUP.bat
 ```
 
-### Bước 4: Khởi Tạo Database
+File này tự động:
+- Kiểm tra Python
+- Tạo virtual environment (`.venv`)
+- Cài tất cả thư viện từ `requirements.txt`
+- Tạo file `.env`
+- Khởi tạo database với tài khoản admin
 
-```bash
-python scripts/init_db.py
+### Bước 4 — Chạy server
+
+```
+start.bat
 ```
 
-### Bước 5: Khởi Động Server
+Mở trình duyệt: **http://localhost:8000**
 
-```bash
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Bước 6: Truy Cập
-
-Mở browser và truy cập: **<http://localhost:8000>**
+| Tài khoản | Giá trị |
+|-----------|---------|
+| Email | `admin@t07.com` |
+| Mật khẩu | `a` |
 
 ---
 
-## 📖 Sử Dụng
+## Cách Copy Models Từ Máy Gốc
 
-### Quick Start
+### Cách 1: USB / ổ cứng ngoài
 
-#### 1. Đăng Nhập
-
-**Admin credentials mặc định:**
-
+Trên **máy gốc**, copy 2 thư mục:
 ```
-Email: admin@t07.com
-Password: a
+E:\Freelance\Research\D11_8_2025_GPTCodeDetetect\GPTSniffer\models\java-detector-finetuned\
+E:\Freelance\Research\D11_8_2025_GPTCodeDetetect\GPTSniffer\models\python-detector-finetuned\
 ```
 
-⚠️ **Lưu ý:** Đổi mật khẩu sau lần đăng nhập đầu tiên!
-
-#### 2. Phân Tích Code
-
-```python
-# Paste code này vào editor
-def quick_sort(arr):
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    left = [x for x in arr if x < pivot]
-    middle = [x for x in arr if x == pivot]
-    right = [x for x in arr if x > pivot]
-    return quick_sort(left) + middle + quick_sort(right)
+Dán vào **máy mới** tại:
+```
+<thư mục clone>\models\java-detector-finetuned\
+<thư mục clone>\models\python-detector-finetuned\
 ```
 
-1. Chọn ngôn ngữ (Python/Java/Auto)
-2. Chọn model (Auto/Python/Java)
-3. Click "Phân Tích Code"
-4. Xem kết quả với confidence score
+### Cách 2: Mạng LAN (nhanh hơn USB)
 
-#### 3. Xem History
+Trên **máy gốc** — chia sẻ thư mục models qua mạng:
+1. Chuột phải thư mục `models` → Share → Everyone (Read)
+2. Ghi lại địa chỉ IP máy gốc (ví dụ: `192.168.1.10`)
 
-- Scroll xuống section "Lịch Sử Gần Đây"
-- Xem danh sách các phân tích
-- Click để xem chi tiết
-- Delete items không cần
+Trên **máy mới** — copy qua mạng:
+```
+\\192.168.1.10\models\java-detector-finetuned   →   models\java-detector-finetuned
+\\192.168.1.10\models\python-detector-finetuned →   models\python-detector-finetuned
+```
+
+### Cách 3: Google Drive / OneDrive
+
+Upload 2 thư mục model lên Drive, download về máy mới rồi giải nén vào `models/`.
 
 ---
 
-## 📚 API Documentation
+## Yêu Cầu Hệ Thống
 
-### Authentication
+| Thành phần | Yêu cầu |
+|-----------|---------|
+| OS | Windows 10/11 (hoặc Linux/macOS) |
+| Python | 3.10 hoặc 3.11 (khuyến nghị) |
+| RAM | Tối thiểu 8GB (16GB khuyến nghị) |
+| Disk | ~2GB trống (cho models + thư viện) |
+| GPU | Không bắt buộc (CPU cũng chạy được) |
 
-#### Register User
-
-```bash
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "username": "username",
-  "password": "Password123!",
-  "full_name": "Full Name"
-}
-```
-
-#### Login
-
-```bash
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "Password123!"
-}
-```
-
-Response:
-
-```json
-{
-  "access_token": "eyJ0eXAi...",
-  "refresh_token": "eyJ0eXAi...",
-  "token_type": "bearer",
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "username": "username"
-  }
-}
-```
-
-### Code Analysis
-
-#### Analyze Code
-
-```bash
-POST /api/analysis
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "code": "def test(): pass",
-  "language": "python",
-  "model": "python",
-  "save_to_history": true
-}
-```
-
-Response:
-
-```json
-{
-  "prediction": "AI-Generated",
-  "confidence": 0.9582,
-  "probabilities": {
-    "AI-Generated": 0.9582,
-    "Human-Written": 0.0418
-  },
-  "language": "python",
-  "model_used": "python",
-  "execution_time": 127.5
-}
-```
-
-### Swagger UI
-
-Truy cập API documentation tại: **<http://localhost:8000/docs>**
+> **Lưu ý Python**: Khi cài, nhớ tick **"Add Python to PATH"**
 
 ---
 
-## 🤖 Mô Hình ML
-
-### Training Process
-
-#### Dataset
+## Cấu Trúc Dự Án
 
 ```
-Python Dataset:
-- Total samples: 4,152
-- AI-generated: 2,152 (52%)
-- Human-written: 2,000 (48%)
-- Split: 79% train, 21% test
-
-Java Dataset:  
-- Legacy dataset from original GPTSniffer paper
-```
-
-#### Model Architecture
-
-```
-- Base Model: microsoft/codebert-base
-- Fine-tuning: Binary classification
-- Optimizer: AdamW
-- Learning rate: 2e-5
-- Epochs: 12 (early stopping at 4)
-- Batch size: 16
-```
-
-#### Performance
-
-| Model | Language | Accuracy | Precision | Recall | F1-Score |
-|-------|----------|----------|-----------|--------|----------|
-| Python | Python | 100% | 100% | 100% | 100% |
-| Java | Java | ~85% | ~85% | ~85% | ~85% |
-
-#### Model Paths
-
-```
-models/
-├── python-detector-20251103_135045/  # Python model
-└── gptsniffer-finetuned/              # Java model
-```
-
----
-
-## 📸 Screenshots
-
-### Landing Page
-
-![Landing Page](screenshots/landing.png)
-*Modern landing page with feature highlights*
-
-### Dashboard
-
-![Dashboard](screenshots/dashboard.png)
-*User dashboard with statistics and analysis tool*
-
-### Analysis Results
-
-![Results](screenshots/results.png)
-*Code analysis results with confidence scores*
-
----
-
-## 🗂️ Project Structure
-
-```
-T07GPTcodeDetect/
-├── app/                        # Backend application
-│   ├── main.py                # FastAPI app
-│   ├── config.py              # Configuration
-│   ├── database.py            # Database connection
-│   ├── models/                # SQLAlchemy models
-│   ├── schemas/               # Pydantic schemas
-│   ├── api/                   # API routes
-│   ├── services/              # Business logic
-│   ├── core/                  # Security, dependencies
-│   └── utils/                 # Utilities
-│
-├── frontend/                   # Frontend application
-│   ├── index.html             # Main HTML
+codeGPTDetect/
+├── SETUP.bat                  ← Chạy lần đầu tiên
+├── start.bat                  ← Chạy hàng ngày
+├── app/                       ← Backend FastAPI
+│   ├── main.py
+│   ├── config.py
+│   ├── api/                   ← API routes
+│   ├── services/              ← Business logic + ML
+│   └── schemas/               ← Request/Response models
+├── frontend/                  ← Giao diện người dùng
+│   ├── index.html
 │   └── js/
-│       └── app.js             # Alpine.js application
-│
-├── models/                     # ML models
-│   ├── python-detector-*/     # Python model
-│   └── gptsniffer-finetuned/  # Java model
-│
-├── scripts/                    # Utility scripts
-│   └── init_db.py             # Database initialization
-│
-├── .env                        # Environment configuration
-├── .gitignore                 # Git ignore rules
-├── requirements.txt           # Python dependencies
-└── README.md                  # This file
+├── models/                    ← ML models (copy thủ công)
+│   ├── java-detector-finetuned/
+│   └── python-detector-finetuned/
+├── scripts/
+│   ├── init_db.py             ← Khởi tạo database
+│   └── reset_db.py            ← Reset database
+├── requirements.txt
+└── .env                       ← Cấu hình (tự tạo từ SETUP.bat)
 ```
 
 ---
 
-## 🤝 Đóng Góp
+## API
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+| Endpoint | Method | Mô tả |
+|----------|--------|-------|
+| `/` | GET | Trang chủ |
+| `/health` | GET | Kiểm tra server |
+| `/docs` | GET | Swagger UI |
+| `/api/auth/login` | POST | Đăng nhập |
+| `/api/auth/register` | POST | Đăng ký |
+| `/api/analysis/predict` | POST | Phân tích code |
+| `/api/analysis/models` | GET | Danh sách models |
 
-### Development Setup
+### Ví dụ gọi API
 
 ```bash
-# Clone repo
-git clone https://github.com/yourusername/T07GPTcodeDetect.git
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run tests
-pytest tests/
-
-# Run server
-python -m uvicorn app.main:app --reload
+curl -X POST http://localhost:8000/api/analysis/predict \
+  -H "Content-Type: application/json" \
+  -d '{"code": "def hello(): print(\"world\")", "language": "python"}'
 ```
 
-### Contribution Guidelines
+---
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Models
+
+| Model | Ngôn ngữ | Accuracy | AUC |
+|-------|----------|----------|-----|
+| `python-detector-finetuned` | Python | 84% | 0.925 |
+| `java-detector-finetuned` | Java | ~85% | — |
+
+Label mapping: `0 = AI-Generated`, `1 = Human-Written`
 
 ---
 
-## 📝 License
+## Troubleshooting
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Lỗi "No module named..."**
+```bat
+.venv\Scripts\pip install -r requirements.txt
+```
 
----
+**Lỗi model không load**
+- Kiểm tra `models/python-detector-finetuned/model.safetensors` có tồn tại không
+- File phải ~498MB, nếu nhỏ hơn là copy bị lỗi
 
-## 👥 Authors
+**Port 8000 bị chiếm**
+- Mở `.env`, đổi `PORT=8001`
+- Hoặc tắt ứng dụng đang dùng port 8000
 
-- **T07 Team** - *Initial work*
-
----
-
-## 🙏 Acknowledgments
-
-- Based on the GPTSniffer paper by Nguyen et al.
-- CodeBERT model by Microsoft
-- Hugging Face Transformers library
-- FastAPI framework
-- Alpine.js for reactive UI
-
----
-
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
+**Server chạy chậm lần đầu**
+- Bình thường — đang load model vào RAM (~30 giây)
+- Lần sau sẽ nhanh hơn vì OS cache
 
 ---
 
-## 🔮 Future Enhancements
+## License
 
-- [ ] Support for more languages (JavaScript, Go, Rust)
-- [ ] API rate limiting
-- [ ] User dashboard improvements
-- [ ] Batch processing
-- [ ] Export functionality
-- [ ] Integration with IDEs
-- [ ] Docker deployment
-- [ ] Cloud deployment guides
-
----
-
-**Made with ❤️ by T07 Team**
+MIT License — free to use for research and education.
