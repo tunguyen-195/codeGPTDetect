@@ -157,7 +157,7 @@ async def delete_user(
 @router.patch("/{user_id}/role", response_model=UserResponse, dependencies=[Depends(require_role("admin"))])
 async def update_user_role(
     user_id: int,
-    new_role: str = Query(..., regex="^(admin|user|viewer)$"),
+    new_role: str = Query(..., pattern="^(admin|user|viewer)$"),
     db: Session = Depends(get_db)
 ):
     """
