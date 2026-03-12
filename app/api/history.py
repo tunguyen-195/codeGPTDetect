@@ -163,7 +163,7 @@ async def toggle_favorite(
 
 @router.get("/export/data")
 async def export_history(
-    format: str = Query("json", regex="^(json|csv)$"),
+    format: str = Query("json", pattern="^(json|csv)$"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

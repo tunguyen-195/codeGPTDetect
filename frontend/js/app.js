@@ -370,7 +370,7 @@ for i in range(10):
             this.loadingStats = true;
             try {
                 const response = await axios.get('/api/history/stats');
-                this.stats = response.data.data || {};
+                this.stats = response.data || {};
                 console.log('📊 Stats loaded:', this.stats);
             } catch (error) {
                 console.error('Failed to load stats:', error);
@@ -385,7 +385,7 @@ for i in range(10):
             this.loadingHistory = true;
             try {
                 const response = await axios.get('/api/history?limit=10');
-                this.history = response.data.data?.items || [];
+                this.history = response.data.analyses || [];
                 console.log('📜 History loaded:', this.history.length, 'items');
             } catch (error) {
                 console.error('Failed to load history:', error);
